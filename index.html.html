@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>조직 문화 유형 진단</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f8f9fa;
+            color: #212529;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .container {
+            width: 100%;
+            max-width: 600px;
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            text-align: center;
+        }
+        .screen {
+            padding: 30px 40px 40px 40px;
+        }
+        h1, h2 {
+            color: #343a40;
+        }
+        h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+        p {
+            font-size: 1.1em;
+            color: #495057;
+            line-height: 1.7;
+        }
+        #participant-name {
+            padding: 12px;
+            font-size: 1em;
+            width: 80%;
+            margin-top: 20px;
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            box-sizing: border-box;
+        }
+        .btn {
+            display: inline-block;
+            background: linear-gradient(145deg, #007bff, #0056b3);
+            color: #fff;
+            padding: 14px 30px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.2em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+        }
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+        }
+        #quiz-screen, #result-screen { display: none; }
+        #progress-bar-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 8px;
+            height: 12px;
+            margin: 25px 0;
+            overflow: hidden;
+        }
+        #progress-bar {
+            width: 0%;
+            height: 100%;
+            background-color: #007bff;
+            border-radius: 8px;
+            transition: width 0.4s ease-in-out;
+        }
+        .question-text {
+            font-size: 1.5em;
+            font-weight: 500;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #212529;
+        }
+        .answer-options {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .answer-btn {
+            background-color: #fff;
+            color: #007bff;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            padding: 15px 0;
+            width: calc(20% - 10px);
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: 700;
+            transition: all 0.2s;
+        }
+        .answer-btn:hover {
+            background-color: #007bff;
+            color: #fff;
+            transform: scale(1.05);
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+        }
+        #result-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        #result-description {
+            font-size: 1.1em;
+            color: #495057;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="start-screen" class="screen">
+            <h1>우리 팀의 조직 문화 유형은?</h1>
+            <p>간단한 진단을 통해 우리 팀이<br>어떤 문화 유형에 속하는지 확인해보세요.</p>
+            <input type="text" id="participant-name" placeholder="이름을 입력하세요">
+            <button id="start-btn" class="btn">진단 시작하기</button>
+        </div>
+        
+        <div id="quiz-screen" class="screen">
+            <div id="progress-bar-container"><div id="progress-bar"></div></div>
+            <h2 id="question-number"></h2>
+            <p id="question-text" class="question-text"></p>
+            <div class="answer-options">
+                <button class="answer-btn" data-score="1">1</button>
+                <button class="answer-btn" data-score="2">2</button>
+                <button class="answer-btn" data-score="3">3</button>
+                <button class="answer-btn" data-score="4">4</button>
+                <button class="answer-btn" data-score="5">5</button>
+            </div>
+            <p style="font-size: 0.9em; color: #6c757d; margin-top: 20px;">(1점: 전혀 그렇지 않다 ~ 5점: 매우 그렇다)</p>
+        </div>
+
+        <div id="result-screen" class="screen">
+            <h2>진단 결과</h2>
+            <div class="chart-container">
+                <canvas id="resultChart"></canvas>
+            </div>
+            <p id="result-title"></p>
+            <p id="result-description"></p>
+            <button id="retry-btn" class="btn">다시 진단하기</button>
+        </div>
+    </div>
+
+<script>
+    const WEB_APP_URL = "여기에_1단계에서_복사한_웹_앱_URL을_붙여넣으세요";
+
+    const questions = [
+        // 심리적 안정감 (Y축, 1-6번)
+        { text: "우리 팀은 실수나 실패를 공유해도 비난받지 않는다." },
+        { text: "우리 팀은 자유롭게 아이디어를 제안하거나 질문할 수 있다." },
+        { text: "우리 팀에서 나의 의견이 존중받고 있다고 느낀다." },
+        { text: "우리 팀은 상호 피드백이 활발히 이루어진다." },
+        { text: "우리 팀은 문제를 솔직히 이야기해도 안전하다고 느낀다." },
+        { text: "우리 팀은 상사나 동료에게 도움을 요청하는 것이 부담스럽지 않다." },
+        // 성과 기준 (X축, 7-12번)
+        { text: "우리 팀은 명확하고 도전적인 성과 목표를 가지고 있다." },
+        { text: "우리 팀은 높은 수준의 결과를 달성하려 노력한다." },
+        { text: "우리 팀은 업무 품질에 대해 지속적으로 피드백을 주고받는다." },
+        { text: "우리 팀은 성과를 기준으로 정기적으로 평가가 이루어진다." },
+        { text: "우리 팀은 스스로 기준을 높이려는 태도를 갖고 있다." },
+        { text: "우리 팀은 실패나 부족한 결과에 대해 학습과 개선을 요구받는다." }
+    ];
+
+    let currentQuestionIndex = 0;
+    const scores = [];
+    let resultChart = null;
+
+    const startScreen = document.getElementById('start-screen');
+    const quizScreen = document.getElementById('quiz-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const startBtn = document.getElementById('start-btn');
+    const questionNumberEl = document.getElementById('question-number');
+    const questionTextEl = document.getElementById('question-text');
+    const answerBtns = document.querySelectorAll('.answer-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const progressBar = document.getElementById('progress-bar');
+    const resultTitleEl = document.getElementById('result-title');
+    const resultDescriptionEl = document.getElementById('result-description');
+    const nameInput = document.getElementById('participant-name');
+    
+    startBtn.addEventListener('click', startQuiz);
+    retryBtn.addEventListener('click', resetQuiz);
+
+    answerBtns.forEach(button => {
+        button.addEventListener('click', () => {
+            selectAnswer(parseInt(button.dataset.score));
+        });
+    });
+
+    function startQuiz() {
+        if (nameInput.value.trim() === "") {
+            alert("이름을 입력해주세요!");
+            return;
+        }
+        startScreen.style.display = 'none';
+        quizScreen.style.display = 'block';
+        currentQuestionIndex = 0;
+        scores.length = 0;
+        showQuestion();
+    }
+    
+    function showQuestion() {
+        progressBar.style.width = `${(currentQuestionIndex / questions.length) * 100}%`;
+        const question = questions[currentQuestionIndex];
+        questionNumberEl.textContent = `문항 ${currentQuestionIndex + 1} / ${questions.length}`;
+        questionTextEl.textContent = question.text;
+    }
+
+    function selectAnswer(score) {
+        scores.push(score);
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questions.length) {
+            showQuestion();
+        } else {
+            showResult();
+        }
+    }
+
+    function getZoneInfo(x, y, threshold) {
+        if (y >= threshold && x >= threshold) {
+            return {
+                title: "🚀 Learning Zone (학습/혁신)",
+                description: "심리적 안정감을 바탕으로 높은 성과 기준을 추구하며, 팀원들이 솔직하게 소통하고 빠르게 학습하며 성장하는 이상적인 상태입니다."
+            };
+        }
+        if (y >= threshold && x < threshold) {
+            return {
+                title: "😌 Comfort Zone (안주)",
+                description: "팀의 분위기는 편안하지만, 도전적인 목표나 성과에 대한 기준이 낮아 성장이 정체되고 현실에 안주하기 쉬운 상태입니다."
+            };
+        }
+        if (y < threshold && x >= threshold) {
+            return {
+                title: "😨 Anxiety Zone (불안)",
+                description: "성과에 대한 압박은 높지만, 실패에 대한 두려움과 불안감이 커서 팀원들이 실수를 감추고 방어적으로 행동하기 쉬운 상태입니다."
+            };
+        }
+        if (y < threshold && x < threshold) {
+            return {
+                title: "🥶 Apathy Zone (무관심)",
+                description: "성과 기준과 심리적 안정감이 모두 낮아, 팀원들이 무관심과 무기력에 빠지기 쉬운 가장 위험한 상태입니다."
+            };
+        }
+        return { title: "", description: "" };
+    }
+
+    function showResult() {
+        quizScreen.style.display = 'none';
+        resultScreen.style.display = 'block';
+
+        const yScore = scores.slice(0, 6).reduce((a, b) => a + b, 0); // Y축: 1~6번 문항(심리적 안정감) 합계
+        const xScore = scores.slice(6, 12).reduce((a, b) => a + b, 0); // X축: 7~12번 문항(성과 기준) 합계
+        
+        const formData = new FormData();
+        formData.append('name', nameInput.value);
+        formData.append('xScore', xScore);
+        formData.append('yScore', yScore);
+        fetch(WEB_APP_URL, { method: 'POST', body: formData, mode: 'no-cors' })
+            .then(() => console.log('결과 전송 요청 완료'))
+            .catch(error => console.error('결과 전송 실패:', error));
+
+        const midPoint = 24; 
+        const zoneInfo = getZoneInfo(xScore, yScore, midPoint);
+
+        resultTitleEl.textContent = zoneInfo.title;
+        resultDescriptionEl.innerHTML = `현재 <strong>${zoneInfo.title}</strong>에 위치해 있습니다.<br><br>${zoneInfo.description}`;
+
+        const ctx = document.getElementById('resultChart').getContext('2d');
+        if (resultChart) {
+            resultChart.destroy();
+        }
+
+        const quadrantBgPlugin = {
+            id: 'quadrantBg',
+            beforeDraw: (chart) => {
+                const {ctx, chartArea: {left, top, right, bottom}, scales: {x, y}} = chart;
+                const midX = x.getPixelForValue(midPoint);
+                const midY = y.getPixelForValue(midPoint);
+                
+                ctx.save();
+                ctx.fillStyle = 'rgba(40, 167, 69, 0.1)';   // Learning Zone (초록)
+                ctx.fillRect(midX, top, right - midX, midY - top);
+                ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';   // Comfort Zone (파랑)
+                ctx.fillRect(left, top, midX - left, midY - top);
+                ctx.fillStyle = 'rgba(255, 193, 7, 0.15)';  // Anxiety Zone (노랑)
+                ctx.fillRect(midX, midY, right - midX, bottom - midY);
+                ctx.fillStyle = 'rgba(108, 117, 125, 0.1)'; // Apathy Zone (회색)
+                ctx.fillRect(left, midY, midX - left, bottom - midY);
+                
+                ctx.font = '600 13px "Noto Sans KR"';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const padding = 20;
+                ctx.fillStyle = '#28a745';
+                ctx.fillText('Learning Zone', (midX + right) / 2, top + padding);
+                ctx.fillStyle = '#007bff';
+                ctx.fillText('Comfort Zone', (left + midX) / 2, top + padding);
+                ctx.fillStyle = '#ffc107';
+                ctx.fillText('Anxiety Zone', (midX + right) / 2, bottom - padding);
+                ctx.fillStyle = '#6c757d';
+                ctx.fillText('Apathy Zone', (left + midX) / 2, bottom - padding);
+                ctx.restore();
+            }
+        };
+        
+        resultChart = new Chart(ctx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: '나의 위치',
+                    data: [{ x: xScore, y: yScore }],
+                    backgroundColor: '#dc3545',
+                    pointRadius: 10,
+                    pointHoverRadius: 13,
+                    borderColor: '#fff',
+                    borderWidth: 2,
+                }]
+            },
+            plugins: [quadrantBgPlugin],
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    x: {
+                        title: { display: true, text: '성과 기준 (Performance Standards)', font: { size: 14, weight: '500' } },
+                        // 수정된 부분: 기준점(24)이 중앙에 오도록 축 범위 조정
+                        min: 4, 
+                        max: 44
+                    },
+                    y: {
+                        title: { display: true, text: '심리적 안정감 (Psychological Safety)', font: { size: 14, weight: '500' } },
+                        // 수정된 부분: 기준점(24)이 중앙에 오도록 축 범위 조정
+                        min: 4, 
+                        max: 44
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return ` (성과 기준: ${context.raw.x}, 심리적 안정감: ${context.raw.y})`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    function resetQuiz() {
+        resultScreen.style.display = 'none';
+        startScreen.style.display = 'block';
+        nameInput.value = "";
+    }
+</script>
+</body>
+</html>
