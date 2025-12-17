@@ -102,6 +102,7 @@
             justify-content: space-between;
             margin-top: 30px;
             flex-wrap: wrap;
+            gap: 5px; /* 버튼 간격 추가 */
         }
         .answer-btn {
             background-color: #fff;
@@ -109,7 +110,7 @@
             border: 2px solid #007bff;
             border-radius: 10px;
             padding: 15px 0;
-            width: calc(20% - 10px);
+            width: calc(20% - 8px); /* 간격을 고려하여 너비 조정 */
             cursor: pointer;
             font-size: 1.1em;
             font-weight: 700;
@@ -125,6 +126,9 @@
             width: 100%;
             max-width: 500px;
             margin: 20px auto;
+            /* 모바일에서 차트 높이를 확보하기 위한 설정 */
+            height: 80vw;
+            max-height: 500px;
         }
         #result-title {
             font-size: 1.4em;
@@ -134,7 +138,46 @@
         #result-description {
             font-size: 1.1em;
             color: #495057;
+            text-align: left; /* 모바일에서 가독성을 위해 왼쪽 정렬 */
         }
+
+        /* ==================== 모바일 반응형 스타일 추가 ==================== */
+        @media screen and (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                border-radius: 10px;
+            }
+            .screen {
+                padding: 20px; /* 스마트폰 화면에서 좌우 여백 줄이기 */
+            }
+            h1 {
+                font-size: 1.8em; /* 스마트폰 화면에서 제목 글자 크기 줄이기 */
+            }
+            h2 {
+                font-size: 1.5em;
+            }
+            p {
+                font-size: 1em;
+            }
+            .question-text {
+                font-size: 1.3em;
+                min-height: 80px;
+            }
+            .answer-btn {
+                font-size: 1em;
+                padding: 12px 0;
+            }
+            #result-title {
+                font-size: 1.2em;
+            }
+            #result-description {
+                font-size: 1em;
+            }
+        }
+        /* =============================================================== */
+
     </style>
 </head>
 <body>
@@ -278,8 +321,8 @@
         quizScreen.style.display = 'none';
         resultScreen.style.display = 'block';
 
-        const yScore = scores.slice(0, 6).reduce((a, b) => a + b, 0); // Y축: 1~6번 문항(심리적 안정감) 합계
-        const xScore = scores.slice(6, 12).reduce((a, b) => a + b, 0); // X축: 7~12번 문항(성과 기준) 합계
+        const yScore = scores.slice(0, 6).reduce((a, b) => a + b, 0); 
+        const xScore = scores.slice(6, 12).reduce((a, b) => a + b, 0); 
         
         const formData = new FormData();
         formData.append('name', nameInput.value);
@@ -300,6 +343,13 @@
             resultChart.destroy();
         }
 
+        // ==================== 모바일 최적화: 차트 옵션 동적 변경 ====================
+        const isMobile = window.innerWidth < 600;
+        const axisFontSize = isMobile ? 10 : 14;
+        const zoneLabelFontSize = isMobile ? 10 : 13;
+        const pointRadius = isMobile ? 8 : 10;
+        // ========================================================================
+
         const quadrantBgPlugin = {
             id: 'quadrantBg',
             beforeDraw: (chart) => {
@@ -308,27 +358,28 @@
                 const midY = y.getPixelForValue(midPoint);
                 
                 ctx.save();
-                ctx.fillStyle = 'rgba(40, 167, 69, 0.1)';   // Learning Zone (초록)
+                ctx.fillStyle = 'rgba(40, 167, 69, 0.1)';   // Learning Zone
                 ctx.fillRect(midX, top, right - midX, midY - top);
-                ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';   // Comfort Zone (파랑)
+                ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';   // Comfort Zone
                 ctx.fillRect(left, top, midX - left, midY - top);
-                ctx.fillStyle = 'rgba(255, 193, 7, 0.15)';  // Anxiety Zone (노랑)
+                ctx.fillStyle = 'rgba(255, 193, 7, 0.15)';  // Anxiety Zone
                 ctx.fillRect(midX, midY, right - midX, bottom - midY);
-                ctx.fillStyle = 'rgba(108, 117, 125, 0.1)'; // Apathy Zone (회색)
+                ctx.fillStyle = 'rgba(108, 117, 125, 0.1)'; // Apathy Zone
                 ctx.fillRect(left, midY, midX - left, bottom - midY);
                 
-                ctx.font = '600 13px "Noto Sans KR"';
+                // 모바일에서 작아진 Zone 라벨 폰트 크기 적용
+                ctx.font = `600 ${zoneLabelFontSize}px "Noto Sans KR"`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const padding = 20;
+                const padding = isMobile ? 15 : 20; // 모바일에서 라벨 여백 조정
                 ctx.fillStyle = '#28a745';
-                ctx.fillText('Learning Zone', (midX + right) / 2, top + padding);
+                ctx.fillText('Learning', (midX + right) / 2, top + padding);
                 ctx.fillStyle = '#007bff';
-                ctx.fillText('Comfort Zone', (left + midX) / 2, top + padding);
+                ctx.fillText('Comfort', (left + midX) / 2, top + padding);
                 ctx.fillStyle = '#ffc107';
-                ctx.fillText('Anxiety Zone', (midX + right) / 2, bottom - padding);
+                ctx.fillText('Anxiety', (midX + right) / 2, bottom - padding);
                 ctx.fillStyle = '#6c757d';
-                ctx.fillText('Apathy Zone', (left + midX) / 2, bottom - padding);
+                ctx.fillText('Apathy', (left + midX) / 2, bottom - padding);
                 ctx.restore();
             }
         };
@@ -340,8 +391,8 @@
                     label: '나의 위치',
                     data: [{ x: xScore, y: yScore }],
                     backgroundColor: '#dc3545',
-                    pointRadius: 10,
-                    pointHoverRadius: 13,
+                    pointRadius: pointRadius,
+                    pointHoverRadius: pointRadius + 3,
                     borderColor: '#fff',
                     borderWidth: 2,
                 }]
@@ -349,17 +400,15 @@
             plugins: [quadrantBgPlugin],
             options: {
                 responsive: true,
-                maintainAspectRatio: true,
+                maintainAspectRatio: false, // 모바일에서 비율을 유연하게 조정
                 scales: {
                     x: {
-                        title: { display: true, text: '성과 기준 (Performance Standards)', font: { size: 14, weight: '500' } },
-                        // 수정된 부분: 기준점(24)이 중앙에 오도록 축 범위 조정
+                        title: { display: true, text: '성과 기준', font: { size: axisFontSize, weight: '500' } },
                         min: 4, 
                         max: 44
                     },
                     y: {
-                        title: { display: true, text: '심리적 안정감 (Psychological Safety)', font: { size: 14, weight: '500' } },
-                        // 수정된 부분: 기준점(24)이 중앙에 오도록 축 범위 조정
+                        title: { display: true, text: '심리적 안정감', font: { size: axisFontSize, weight: '500' } },
                         min: 4, 
                         max: 44
                     }
@@ -369,7 +418,7 @@
                     tooltip: {
                         callbacks: {
                             label: function(context) {
-                                return ` (성과 기준: ${context.raw.x}, 심리적 안정감: ${context.raw.y})`;
+                                return ` (성과: ${context.raw.x}, 안정감: ${context.raw.y})`;
                             }
                         }
                     }
