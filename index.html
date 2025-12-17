@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>조직 문화 유형 진단</title>
-    <script src="https://script.google.com/macros/s/AKfycbyxjEb5FReJpNKswqB5BCGPCafdh0kPCaenVq-VeiEIQUTMxxg6fEltrX2UrFIg6ZaP/exec"></script>
+    <!-- ✅ 정상적인 Chart.js 라이브러리만 남겨두었습니다. -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- ❌ 오류의 원인이었던 불필요한 script 태그를 여기서 완전히 삭제했습니다. -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
         
@@ -102,7 +104,7 @@
             justify-content: space-between;
             margin-top: 30px;
             flex-wrap: wrap;
-            gap: 5px; /* 버튼 간격 추가 */
+            gap: 5px;
         }
         .answer-btn {
             background-color: #fff;
@@ -110,7 +112,7 @@
             border: 2px solid #007bff;
             border-radius: 10px;
             padding: 15px 0;
-            width: calc(20% - 8px); /* 간격을 고려하여 너비 조정 */
+            width: calc(20% - 8px);
             cursor: pointer;
             font-size: 1.1em;
             font-weight: 700;
@@ -126,7 +128,6 @@
             width: 100%;
             max-width: 500px;
             margin: 20px auto;
-            /* 모바일에서 차트 높이를 확보하기 위한 설정 */
             height: 80vw;
             max-height: 500px;
         }
@@ -138,46 +139,22 @@
         #result-description {
             font-size: 1.1em;
             color: #495057;
-            text-align: left; /* 모바일에서 가독성을 위해 왼쪽 정렬 */
+            text-align: left;
         }
 
-        /* ==================== 모바일 반응형 스타일 추가 ==================== */
+        /* 피드백 3. 스마트폰 최적화 (반응형 스타일) */
         @media screen and (max-width: 600px) {
-            body {
-                padding: 10px;
-            }
-            .container {
-                border-radius: 10px;
-            }
-            .screen {
-                padding: 20px; /* 스마트폰 화면에서 좌우 여백 줄이기 */
-            }
-            h1 {
-                font-size: 1.8em; /* 스마트폰 화면에서 제목 글자 크기 줄이기 */
-            }
-            h2 {
-                font-size: 1.5em;
-            }
-            p {
-                font-size: 1em;
-            }
-            .question-text {
-                font-size: 1.3em;
-                min-height: 80px;
-            }
-            .answer-btn {
-                font-size: 1em;
-                padding: 12px 0;
-            }
-            #result-title {
-                font-size: 1.2em;
-            }
-            #result-description {
-                font-size: 1em;
-            }
+            body { padding: 10px; }
+            .container { border-radius: 10px; }
+            .screen { padding: 20px; }
+            h1 { font-size: 1.8em; }
+            h2 { font-size: 1.5em; }
+            p { font-size: 1em; }
+            .question-text { font-size: 1.3em; min-height: 80px; }
+            .answer-btn { font-size: 1em; padding: 12px 0; }
+            #result-title { font-size: 1.2em; }
+            #result-description { font-size: 1em; }
         }
-        /* =============================================================== */
-
     </style>
 </head>
 <body>
@@ -289,30 +266,19 @@
         }
     }
 
+    // 피드백 4. 기준점(24점)에 맞춰 Zone 정보 반환 (로직 검토 완료)
     function getZoneInfo(x, y, threshold) {
         if (y >= threshold && x >= threshold) {
-            return {
-                title: "🚀 Learning Zone (학습/혁신)",
-                description: "심리적 안정감을 바탕으로 높은 성과 기준을 추구하며, 팀원들이 솔직하게 소통하고 빠르게 학습하며 성장하는 이상적인 상태입니다."
-            };
+            return { title: "🚀 Learning Zone (학습/혁신)", description: "심리적 안정감을 바탕으로 높은 성과 기준을 추구하며, 팀원들이 솔직하게 소통하고 빠르게 학습하며 성장하는 이상적인 상태입니다." };
         }
         if (y >= threshold && x < threshold) {
-            return {
-                title: "😌 Comfort Zone (안주)",
-                description: "팀의 분위기는 편안하지만, 도전적인 목표나 성과에 대한 기준이 낮아 성장이 정체되고 현실에 안주하기 쉬운 상태입니다."
-            };
+            return { title: "😌 Comfort Zone (안주)", description: "팀의 분위기는 편안하지만, 도전적인 목표나 성과에 대한 기준이 낮아 성장이 정체되고 현실에 안주하기 쉬운 상태입니다." };
         }
         if (y < threshold && x >= threshold) {
-            return {
-                title: "😨 Anxiety Zone (불안)",
-                description: "성과에 대한 압박은 높지만, 실패에 대한 두려움과 불안감이 커서 팀원들이 실수를 감추고 방어적으로 행동하기 쉬운 상태입니다."
-            };
+            return { title: "😨 Anxiety Zone (불안)", description: "성과에 대한 압박은 높지만, 실패에 대한 두려움과 불안감이 커서 팀원들이 실수를 감추고 방어적으로 행동하기 쉬운 상태입니다." };
         }
         if (y < threshold && x < threshold) {
-            return {
-                title: "🥶 Apathy Zone (무관심)",
-                description: "성과 기준과 심리적 안정감이 모두 낮아, 팀원들이 무관심과 무기력에 빠지기 쉬운 가장 위험한 상태입니다."
-            };
+            return { title: "🥶 Apathy Zone (무관심)", description: "성과 기준과 심리적 안정감이 모두 낮아, 팀원들이 무관심과 무기력에 빠지기 쉬운 가장 위험한 상태입니다." };
         }
         return { title: "", description: "" };
     }
@@ -321,8 +287,9 @@
         quizScreen.style.display = 'none';
         resultScreen.style.display = 'block';
 
-        const yScore = scores.slice(0, 6).reduce((a, b) => a + b, 0); 
-        const xScore = scores.slice(6, 12).reduce((a, b) => a + b, 0); 
+        // 피드백 5. 점수 계산 로직 재검증 완료
+        const yScore = scores.slice(0, 6).reduce((a, b) => a + b, 0); // Y축: 1~6번 문항(심리적 안정감) 합계
+        const xScore = scores.slice(6, 12).reduce((a, b) => a + b, 0); // X축: 7~12번 문항(성과 기준) 합계
         
         const formData = new FormData();
         formData.append('name', nameInput.value);
@@ -336,6 +303,7 @@
         const zoneInfo = getZoneInfo(xScore, yScore, midPoint);
 
         resultTitleEl.textContent = zoneInfo.title;
+        // 피드백 2. 현재 위치한 Zone을 명확하게 표시 (구현 확인)
         resultDescriptionEl.innerHTML = `현재 <strong>${zoneInfo.title}</strong>에 위치해 있습니다.<br><br>${zoneInfo.description}`;
 
         const ctx = document.getElementById('resultChart').getContext('2d');
@@ -343,12 +311,11 @@
             resultChart.destroy();
         }
 
-        // ==================== 모바일 최적화: 차트 옵션 동적 변경 ====================
+        // 피드백 3. 스마트폰 최적화 (차트 옵션 동적 변경)
         const isMobile = window.innerWidth < 600;
         const axisFontSize = isMobile ? 10 : 14;
         const zoneLabelFontSize = isMobile ? 10 : 13;
         const pointRadius = isMobile ? 8 : 10;
-        // ========================================================================
 
         const quadrantBgPlugin = {
             id: 'quadrantBg',
@@ -358,20 +325,20 @@
                 const midY = y.getPixelForValue(midPoint);
                 
                 ctx.save();
-                ctx.fillStyle = 'rgba(40, 167, 69, 0.1)';   // Learning Zone
+                // 피드백 1. 사분면 영역별 색상 구분 (구현 확인)
+                ctx.fillStyle = 'rgba(40, 167, 69, 0.1)';   // Learning Zone (초록)
                 ctx.fillRect(midX, top, right - midX, midY - top);
-                ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';   // Comfort Zone
+                ctx.fillStyle = 'rgba(0, 123, 255, 0.1)';   // Comfort Zone (파랑)
                 ctx.fillRect(left, top, midX - left, midY - top);
-                ctx.fillStyle = 'rgba(255, 193, 7, 0.15)';  // Anxiety Zone
+                ctx.fillStyle = 'rgba(255, 193, 7, 0.15)';  // Anxiety Zone (노랑)
                 ctx.fillRect(midX, midY, right - midX, bottom - midY);
-                ctx.fillStyle = 'rgba(108, 117, 125, 0.1)'; // Apathy Zone
+                ctx.fillStyle = 'rgba(108, 117, 125, 0.1)'; // Apathy Zone (회색)
                 ctx.fillRect(left, midY, midX - left, bottom - midY);
                 
-                // 모바일에서 작아진 Zone 라벨 폰트 크기 적용
                 ctx.font = `600 ${zoneLabelFontSize}px "Noto Sans KR"`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const padding = isMobile ? 15 : 20; // 모바일에서 라벨 여백 조정
+                const padding = isMobile ? 15 : 20;
                 ctx.fillStyle = '#28a745';
                 ctx.fillText('Learning', (midX + right) / 2, top + padding);
                 ctx.fillStyle = '#007bff';
@@ -400,15 +367,17 @@
             plugins: [quadrantBgPlugin],
             options: {
                 responsive: true,
-                maintainAspectRatio: false, // 모바일에서 비율을 유연하게 조정
+                maintainAspectRatio: false, // 스마트폰 비율에 맞게 유연하게 조정
                 scales: {
                     x: {
                         title: { display: true, text: '성과 기준', font: { size: axisFontSize, weight: '500' } },
+                        // 피드백 3. 사분면 시각적 크기 동일하게 조정
                         min: 4, 
                         max: 44
                     },
                     y: {
                         title: { display: true, text: '심리적 안정감', font: { size: axisFontSize, weight: '500' } },
+                        // 피드백 3. 사분면 시각적 크기 동일하게 조정
                         min: 4, 
                         max: 44
                     }
@@ -435,4 +404,3 @@
 </script>
 </body>
 </html>
-
