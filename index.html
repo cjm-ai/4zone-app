@@ -206,9 +206,6 @@
             <div class="chart-container">
                 <canvas id="adminChart"></canvas>
             </div>
-            <label style="cursor:pointer; font-size: 1.1em;">
-                <input type="checkbox" id="toggle-labels-checkbox" checked> 이름/점수 표시
-            </label>
             <button id="back-to-start-btn" class="btn" style="margin-top: 15px;">처음으로</button>
         </div>
     </div>
@@ -248,7 +245,6 @@
     const adminBtn = document.getElementById('admin-btn');
     const retryBtn = document.getElementById('retry-btn');
     const backToStartBtn = document.getElementById('back-to-start-btn');
-    const toggleLabelsCheckbox = document.getElementById('toggle-labels-checkbox');
 
     const questionNumberEl = document.getElementById('question-number');
     const questionTextEl = document.getElementById('question-text');
@@ -261,9 +257,6 @@
     retryBtn.addEventListener('click', resetQuiz);
     adminBtn.addEventListener('click', showAdminLogin);
     backToStartBtn.addEventListener('click', resetQuiz);
-    toggleLabelsCheckbox.addEventListener('change', () => {
-        if(adminChart) adminChart.update();
-    });
 
     answerBtns.forEach(button => {
         button.addEventListener('click', () => {
@@ -441,41 +434,20 @@
                             }
                         },
                         datalabels: {
-                            display: (context) => toggleLabelsCheckbox.checked,
-                            align: 'top',
-                            offset: 6,
-                            font: { size: 11 },
-                            formatter: (value) => value.name,
-                            listeners: {
-                                click: (context) => {
-                                    console.log(context.dataset.data[context.dataIndex]);
+                            display: false
+                        },
+                        tooltip: {
+                            enabled: true,
+                            callbacks: {
+                                label: function(context) {
+                                    const raw = context.raw;
+                                    return `${raw.name} (${raw.x}, ${raw.y})`;
                                 }
                             }
                         }
                     }
                 }
             });
-
-            // Add second datalabel for scores
-            adminChart.options.plugins.datalabels.display = (context) => toggleLabelsCheckbox.checked;
-            adminChart.options.plugins.datalabels = [
-                 {
-                    display: (context) => toggleLabelsCheckbox.checked,
-                    align: 'top',
-                    offset: 6,
-                    font: { size: 11, weight: 'bold' },
-                    formatter: (value) => value.name
-                 },
-                 {
-                    display: (context) => toggleLabelsCheckbox.checked,
-                    align: 'bottom',
-                    offset: 6,
-                    font: { size: 11 },
-                    formatter: (value) => `(${value.x}, ${value.y})`
-                 }
-            ];
-            adminChart.update();
-
 
         } catch (error) {
             console.error('데이터 로딩 실패:', error);
